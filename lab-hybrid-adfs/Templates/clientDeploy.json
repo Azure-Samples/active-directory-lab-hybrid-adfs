@@ -1,0 +1,222 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": { "description": "Admin password" }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": { "description": "Admin username" }
+    },
+    "deploymentNumber": {
+      "type": "string",
+      "defaultValue": "1",
+      "metadata": { "description": "When deploying the stack N times, define the instance - this will be appended to some resource names to avoid collisions." }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "vnet"
+    },
+    "cliSubnetName": {
+      "type": "string",
+      "defaultValue": "[concat('cliSubnet', parameters('deploymentNumber'))]"
+    },
+    "adDomainName": {
+      "type": "string",
+      "defaultValue": "contoso.com"
+    },
+    "clientsToDeploy": {
+      "type": "array",
+      "defaultValue": []
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_A1_v2",
+      "metadata": { "description": "Select a VM SKU" }
+    },
+    "assetLocation": {
+      "type": "string"
+    },
+    "clientImageBaseResource": {
+      "type": "string",
+      "metadata": { "description": "Enter the full Azure ARM resource string to the location where you store your client images."}
+    }
+  },
+  "variables": {
+    "location": "[resourceGroup().location]",
+    "shortDomainName": "[split(parameters('adDomainName'),'.')[0]]",
+    "ImgBase": "[parameters('clientImageBaseResource')]",
+    "cliSubnetID": "[concat(variables('vnetID'),'/subnets/', parameters('cliSubnetName'))]",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
+    "pubIpAddressName": "[toLower(concat('cliPubIp', resourceGroup().name, parameters('deploymentNumber')))]",
+    "nicName": "[concat('nic-', parameters('deploymentNumber'), '-')]",
+    "copyCount": "[length(parameters('ClientsToDeploy'))]",
+    "apiVersion": "2015-06-15",
+    "computeApiVersion": "2016-04-30-preview",
+    "domainJoinOptions": 3,
+    "ConfigRDPUsers": "ConfigRDPUsers.ps1",
+    "ConfigRDPUsersUri": "[concat(parameters('assetLocation'), 'Scripts/ConfigRDPUsers.ps1')]"
+  },
+  "resources": [
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(variables('pubIpAddressName'), copyIndex(1))]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "ipCopy",
+        "count": "[variables('copyCount')]"
+      },
+      "tags": {
+        "displayName": "ClientPubIP",
+        "isClient": "true"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[tolower(concat('win', parameters('ClientsToDeploy')[copyIndex()], '-', copyIndex(1), '-', uniquestring(resourceGroup().id)))]"
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('nicName'), copyIndex(1))]",
+      "location": "[variables('location')]",
+      "copy": {
+        "name": "nicCopy",
+        "count": "[variables('copyCount')]"
+      },
+      "tags": {
+        "displayName": "ClientNIC",
+        "isClient": "true"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', concat(variables('pubIpAddressName'), copyIndex(1)))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('pubIpAddressName'), copyIndex(1)))]"
+              },
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', parameters('virtualNetworkName'), parameters('cliSubnetName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[variables('computeApiVersion')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat('cli-Win', parameters('ClientsToDeploy')[copyIndex()], '-', copyIndex(1), '-', parameters('deploymentNumber'))]",
+      "location": "[variables('location')]",
+      "copy": {
+        "name": "vmCopy",
+        "count": "[variables('copyCount')]"
+      },
+      "tags": {
+        "displayName": "ClientVM",
+        "isClient": "true"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex(1))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computername": "[concat('win', parameters('ClientsToDeploy')[copyIndex()], '-', copyIndex(1))]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "windowsConfiguration": {
+            "provisionVmAgent": "true"
+          }
+        },
+        "storageProfile": {
+          "imageReference": {
+            "id": "[concat(variables('ImgBase'), 'OSImage_Win', parameters('ClientsToDeploy')[copyIndex()])]"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'), copyIndex(1)))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "name": "ConfigRDPUsers",
+          "type": "extensions",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2015-06-15",
+          "dependsOn": [
+            "[concat('cli-Win', parameters('ClientsToDeploy')[copyIndex()], '-', copyIndex(1), '-', parameters('deploymentNumber'))]"
+          ],
+          "tags": {
+            "displayName": "ConfigRDPUsers",
+            "isClient": "true"
+          },
+          "properties": {
+            "publisher": "Microsoft.Compute",
+            "type": "CustomScriptExtension",
+            "typeHandlerVersion": "1.4",
+            "forceUpdateTag": "1.0.1",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": [
+                "[variables('ConfigRDPUsersUri')]"
+              ],
+              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('ConfigRDPUsers'))]"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat('cli-Win', parameters('ClientsToDeploy')[copyIndex()], '-', copyIndex(1), '-', parameters('deploymentNumber'), '/joindomain')]",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[concat('cli-Win', parameters('ClientsToDeploy')[copyIndex()], '-', copyIndex(1), '-', parameters('deploymentNumber'))]"
+      ],
+      "tags": {
+        "displayName": "ClientVMJoin",
+        "isClient": "true"
+      },
+      "copy": {
+        "name": "joinCopy",
+        "count": "[variables('copyCount')]"
+      },
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "JsonADDomainExtension",
+        "typeHandlerVersion": "1.3",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "Name": "[parameters('adDomainName')]",
+          "OUPath": "",
+          "User": "[concat(variables('shortDomainName'), '\\', parameters('adminUsername'))]",
+          "Restart": "true",
+          "Options": "[variables('domainJoinOptions')]"
+        },
+        "protectedsettings": {
+          "Password": "[parameters('adminPassword')]"
+        }
+      }
+    }
+  ],
+  "outputs": {
+  } 
+}

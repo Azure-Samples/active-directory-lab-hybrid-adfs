@@ -1,0 +1,16 @@
+[ClassVersion("0.1.0.0"), FriendlyName("xCertReq")]
+class MSFT_xCertReq : OMI_BaseResource
+{
+    [Key, Description("Provide the text string to use as the subject of the certificate.")] String Subject;
+    [Required, Description("The FQDN of the Active Directory Certificate Authority on the local area network.")] String CAServerFQDN;
+    [Required, Description("The name of the certificate authority, by default this will be in format domain-servername-ca.")] String CARootName;
+    [Write, Description("The bit length of the encryption key to be used"), ValueMap{"1024","2048","4096","8192"}, Values{"1024","2048","4096","8192"}] String KeyLength;
+    [Write, Description("The option to allow the certificate to be exportable, by default it will be true.")] Boolean Exportable;
+    [Write, Description("The selection of provider for the type of encryption to be used.")] String ProviderName;
+    [Write, Description("The Object Identifier that is used to name the object.")] String OID;
+    [Write, Description("The Keyusage is a restriction method that determines what a certificate can be used for.")] String KeyUsage;
+    [Write, Description("The template used for the definiton of the certificate.")] String CertificateTemplate;
+    [Write, Description("The subject alternative name used to createthe certificate.")] String SubjectAltName;
+    [Write, Description("The credentials that will be used to access the template in the Certificate Authority."), EmbeddedInstance("MSFT_Credential")] String Credential;
+    [Write, Description("Determines if the resource will also renew a certificate within 7 days of expiration.")] Boolean AutoRenew;
+};

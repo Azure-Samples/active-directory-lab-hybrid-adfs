@@ -1,0 +1,9 @@
+[ClassVersion("1.0"), FriendlyName("xCertificateImport")]
+class MSFT_xCertificateImport : OMI_BaseResource
+{
+    [Key,Description("The thumbprint (unique identifier) of the certificate you're importing.")] string Thumbprint;
+    [Required,Description("The path to the CER file you want to import.")] string Path;
+    [Key,Description("The Windows Certificate Store Location to import the certificate to."),ValueMap{"LocalMachine", "CurrentUser"},Values{"LocalMachine", "CurrentUser"}] string Location;
+    [Key,Description("The Windows Certificate Store Name to import the certificate to.")] string Store;
+    [Write,Description("Specifies whether the certificate should be present or absent."),ValueMap{"Present", "Absent"},Values{"Present", "Absent"}] string Ensure;
+};

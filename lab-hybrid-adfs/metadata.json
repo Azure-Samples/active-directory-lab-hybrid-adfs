@@ -1,0 +1,7 @@
+﻿{
+  "itemDisplayName": "AAD ADFS Lab",
+  "description": "Using DSC and custom scripts, deploys a full Azure Active Directory federation lab with ADFS preconfigured. Deploys and configures a Microsoft Certificate Authority (CA) server and automatically has it issue certs for the ADFS farm and WAP servers. Deployment is turnkey, with the result being a public WAP endpoint that will authenticate test users automatically added to the AD domain. The AD and ADFS server(s) also have MSOL and AzureAD PowerShell modules installed, as well as Azure Active Directory Connect. Connect is installed but not configured.",
+  "summary": "Creates full AD/CA/ADFS/WAP environment with Azure AD Connect installed",
+  "githubUsername": "bretthacker",
+  "dateUpdated": "2017-3-15"
+}
