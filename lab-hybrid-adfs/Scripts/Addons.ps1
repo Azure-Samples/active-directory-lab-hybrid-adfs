@@ -5,7 +5,7 @@
     $ctx = Get-AzureRMContext -ErrorAction Stop
 
     $TenantId = $ctx.Tenant.TenantId
-	$authUrl = "https://login.windows.net/${tenantId}"
+	$authUrl = "https://login.microsoftonline.com/${tenantId}"
  
 	$AuthContext = [Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext]$authUrl
 
