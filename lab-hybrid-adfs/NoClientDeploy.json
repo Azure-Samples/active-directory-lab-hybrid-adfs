@@ -4,7 +4,7 @@
   "parameters": {
     "assetLocation": {
       "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/Azure-Samples/active-directory-lab-hybrid-adfs/master/AAD_ADFS_Lab/",
+      "defaultValue": "https://raw.githubusercontent.com/Azure-Samples/active-directory-lab-hybrid-adfs/master/lab-hybrid-adfs/",
       "metadata": { "description": "This is the location in which all the linked templates are stored." }
     },
     "adminUsername": {
