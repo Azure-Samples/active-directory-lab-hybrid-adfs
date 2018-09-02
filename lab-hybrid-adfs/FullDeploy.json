@@ -404,8 +404,8 @@
       "properties": {
         "publisher": "Microsoft.Compute",
         "type": "CustomScriptExtension",
-        "typeHandlerVersion": "1.4",
-        "autoUpgradeMinorVersion": false,
+        "typeHandlerVersion": "1.9",
+        "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
             "[variables('DeployADFSFarmTemplateUri')]"
@@ -460,8 +460,8 @@
       "properties": {
         "publisher": "Microsoft.Compute",
         "type": "CustomScriptExtension",
-        "typeHandlerVersion": "1.4",
-        "autoUpgradeMinorVersion": false,
+        "typeHandlerVersion": "1.9",
+        "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
             "[variables('CopyCertToWAPTemplateUri')]"
