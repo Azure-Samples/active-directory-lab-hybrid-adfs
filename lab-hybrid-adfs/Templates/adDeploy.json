@@ -163,8 +163,8 @@
             "publisher": "Microsoft.Compute",
             "type": "CustomScriptExtension",
             "forceUpdateTag": "1.0.1",
-            "typeHandlerVersion": "1.4",
-            "autoUpgradeMinorVersion": false,
+            "typeHandlerVersion": "1.9",
+            "autoUpgradeMinorVersion": true,
             "settings": {
               "fileUris": [
                 "[variables('DeployADTemplateUri')]"
