@@ -297,6 +297,10 @@ configuration DomainController
             SetScript  = {
 				# Install AAD Tools
 					md c:\temp -ErrorAction Ignore
+					
+                    #Forcing TLS 1.2 on calls from this script
+                    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 
+					
 					Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
 
 					#Install-Module -Name Azure -AllowClobber -Force
